@@ -5,6 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PermDelete — Xóa Vĩnh Viễn cho Windows</title>
 <meta name="description" content="Thêm Xóa Vĩnh Viễn vào menu chuột phải Windows. Dùng Shell API chính thống, không flash cửa sổ, không qua Recycle Bin.">
+<meta name="keywords" content="windows context menu, permanent delete, xóa vĩnh viễn, shift delete, shell api, registry, SHFileOperation">
+<meta name="author" content="Nguyễn Quốc Anh">
+<link rel="canonical" href="https://nguyenquocanhz.github.io/microsoft-permdelete-script/">
+<!-- Open Graph -->
+<meta property="og:type"         content="website">
+<meta property="og:title"        content="PermDelete — Xóa Vĩnh Viễn cho Windows">
+<meta property="og:description"  content="Thêm Shift+Delete vào menu chuột phải. Dùng Windows Shell API chính thống, không flash cửa sổ, không qua Recycle Bin.">
+<meta property="og:url"          content="https://nguyenquocanhz.github.io/microsoft-permdelete-script/">
+<meta property="og:image"        content="https://nguyenquocanhz.github.io/microsoft-permdelete-script/assets/og-image.png">
+<meta property="og:image:width"  content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale"       content="vi_VN">
+<meta property="og:site_name"    content="PermDelete">
+<!-- Twitter Card -->
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="PermDelete — Xóa Vĩnh Viễn cho Windows">
+<meta name="twitter:description" content="Thêm Shift+Delete vào menu chuột phải. Shell API chính thống, không flash cửa sổ.">
+<meta name="twitter:image"       content="https://nguyenquocanhz.github.io/microsoft-permdelete-script/assets/og-image.png">
+<meta name="twitter:creator"     content="@nqatech2003">
+<!-- Schema.org -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PermDelete","operatingSystem":"Windows 10, Windows 11","applicationCategory":"UtilitiesApplication","description":"Thêm Xóa Vĩnh Viễn vào menu chuột phải Windows bằng SHFileOperation API.","url":"https://nguyenquocanhz.github.io/microsoft-permdelete-script/","downloadUrl":"https://github.com/nguyenquocanhz/microsoft-permdelete-script/releases/latest","softwareVersion":"0.1.0","license":"https://opensource.org/licenses/MIT","author":{"@type":"Person","name":"Nguyễn Quốc Anh","url":"https://nguyenquocanh.io.vn"}}
+</script>
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2307090f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='monospace' fill='%233b82f6'%3E%E2%8C%A6%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -415,7 +440,21 @@
 <body>
 
 <nav>
-  <div class="nav-logo">Perm<span>Delete</span></div>
+  <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="28" height="28" rx="7" fill="#0d1117"/>
+      <rect width="28" height="28" rx="7" stroke="#1e2d40" stroke-width="1"/>
+      <!-- trash body -->
+      <rect x="9" y="12" width="10" height="10" rx="1.5" fill="none" stroke="#3b82f6" stroke-width="1.4"/>
+      <!-- trash lid -->
+      <path d="M7 11h14" stroke="#3b82f6" stroke-width="1.4" stroke-linecap="round"/>
+      <!-- handle -->
+      <path d="M11.5 11V9.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5V11" stroke="#3b82f6" stroke-width="1.4" stroke-linecap="round"/>
+      <!-- lines inside -->
+      <path d="M12 14.5v4M14 14.5v4M16 14.5v4" stroke="#06b6d4" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <div class="nav-logo">Perm<span>Delete</span></div>
+  </a>
   <div class="nav-links">
     <a href="#features">Tính năng</a>
     <a href="#install">Cài đặt</a>
@@ -436,10 +475,10 @@
     Dùng Shell API chính thống — không flash cửa sổ, không qua Recycle Bin.
   </p>
   <div class="hero-actions">
-    <a href="https://github.com/nguyenquocanhz/microsoft-permdelete-script/releases" class="btn btn-primary">
+    <a href="https://github.com/nguyenquocanhz/perm-delete/releases" class="btn btn-primary">
       ↓ Download
     </a>
-    <a href="https://github.com/nguyenquocanhz/microsoft-permdelete-script" class="btn btn-ghost">
+    <a href="https://github.com/nguyenquocanhz/perm-delete" class="btn btn-ghost">
       View on GitHub
     </a>
   </div>
@@ -453,7 +492,7 @@
         <div class="term-title">build_and_install.bat — Administrator</div>
       </div>
       <div class="term-body">
-        <div><span class="t-dim">C:\microsoft-permdelete-script&gt;</span> <span class="t-cmd">build_and_install.bat</span></div>
+        <div><span class="t-dim">C:\perm-delete&gt;</span> <span class="t-cmd">build_and_install.bat</span></div>
         <div><span class="t-ok">[OK]</span> Compiler: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe</div>
         <div><span class="t-dim">[..]</span> Dang compile...</div>
         <div><span class="t-ok">[OK]</span> Da compile: <span class="t-blue">C:\Windows\System32\PermDelete.exe</span></div>
@@ -515,7 +554,7 @@
       <div class="step-content">
         <h3>Download repo</h3>
         <p>Clone hoặc download ZIP về, giải nén cùng thư mục.</p>
-        <code>git clone https://github.com/nguyenquocanhz/microsoft-permdelete-script</code>
+        <code>git clone https://github.com/nguyenquocanhz/perm-delete</code>
       </div>
     </div>
     <div class="step">
