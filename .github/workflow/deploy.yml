@@ -1,0 +1,130 @@
+name: Deploy & Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # tao release + upload asset
+  pages: write      # deploy github pages
+  id-token: write   # xac thuc pages OIDC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ──────────────────────────────────────────────
+# JOB 1: GitHub Pages (chay moi push len main)
+# ──────────────────────────────────────────────
+jobs:
+  deploy-pages:
+    name: Deploy GitHub Pages
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # Chi serve index.html — khong can build step
+      - name: Prepare pages artifact
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          # Copy asset tinh neu co
+          [ -d assets ] && cp -r assets _site/assets || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+  # ──────────────────────────────────────────────
+  # JOB 2: Build ZIP + tao Release (chi chay khi push tag v*)
+  # ──────────────────────────────────────────────
+  release:
+    name: Build Release ZIP
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build release ZIP
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          DIST="perm-delete-${VERSION}"
+
+          mkdir -p "$DIST"
+
+          # Chi include file can thiet, bo qua source control noise
+          cp PermDelete.cs       "$DIST/"
+          cp build_and_install.bat   "$DIST/"
+          cp uninstall_PermDelete.bat "$DIST/"
+          cp README.md           "$DIST/"
+          cp LICENSE             "$DIST/"
+          cp index.html          "$DIST/"
+
+          zip -r "${DIST}.zip" "$DIST/"
+
+          # Checksum de verify download
+          sha256sum "${DIST}.zip" > "${DIST}.zip.sha256"
+
+          echo "ZIP_NAME=${DIST}.zip" >> $GITHUB_ENV
+          echo "SHA_NAME=${DIST}.zip.sha256" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: PermDelete ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## PermDelete ${{ steps.version.outputs.VERSION }}
+
+            Thêm **"Xóa vĩnh viễn"** vào menu chuột phải Windows.
+
+            ### Cài đặt
+            1. Download `perm-delete-${{ steps.version.outputs.VERSION }}.zip`
+            2. Giải nén
+            3. Chuột phải `build_and_install.bat` → **Run as administrator**
+
+            ### Gỡ cài đặt
+            Chuột phải `uninstall_PermDelete.bat` → Run as administrator
+
+            ### Checksum
+            Verify file bằng `perm-delete-${{ steps.version.outputs.VERSION }}.zip.sha256`
+
+            ---
+            **Yêu cầu:** Windows 10/11 · .NET Framework 4.0+
+          files: |
+            ${{ env.ZIP_NAME }}
+            ${{ env.SHA_NAME }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
